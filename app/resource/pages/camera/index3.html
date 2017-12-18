@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /> 
+<title></title>
+<style>
+video {
+    border: 1px solid #ccc;
+    display: block;
+    margin: 0 0 20px 0;
+    float:left;
+}
+canvas {
+    margin-top: 20px;
+    border: 1px solid #ccc;
+    display: block;
+}
+</style>
+</head>
+<body>
+    <!-- FLASH调用 -->
+    <div id="FalshDiv"  style="text-align:center;display:none;">
+            <EMBED height="464" type="application/x-shockwave-flash"
+            pluginspage="http://www.macromedia.com/go/getflashplayer" width="514"
+            src="data/AvatarEditor.swf" quality="high" allowscriptaccess="always"
+            flashvars="type=camera&amp;radom=1&amp;">
+            </EMBED>
+            
+            <br />
+            <br />
+            
+            <EMBED height="464" type="application/x-shockwave-flash"
+            pluginspage="http://www.macromedia.com/go/getflashplayer" width="514"
+            src="data/AvatarEditor.swf" quality="high" allowscriptaccess="always"
+            flashvars="type=photo&amp;photoUrl=0.jpg&amp;radom=1&amp;">
+            </EMBED>
+    </div>
+    <!-- HTML5调用 -->
+    <div id="HTML5Div" style="text-align:center;display:none;">    
+        <video width="200" height="150"></video>
+        <canvas width="200" height="150"></canvas>
+
+        <p>
+            <button id="snap">截取图像</button>
+            <button id="close">关闭摄像头</button>
+            <button id="upload">上传图像</button>
+        </p>
+
+        <img id="uploaded" width="200" height="150" />
+    </div>    
+</body>
+
+<script type="text/javascript">
+    function $(elem) {
+        return document.querySelector(elem);
+    }
+    var isBrowser;
+    window.onload=function(){
+
+        //判断浏览器
+        isBrowser = doVerificationBrowser();
+        //根据浏览器不同使用不同方法调用摄像头
+        if(isBrowser){
+            $("#FalshDiv").style.display="block";
+        }else{
+            //判断浏览器是否 支持HTML5
+            if(checkHtml5()){
+                $("#HTML5Div").style.display="block";
+                //doHtml5();
+            }
+        }
+    };
+    /**
+     * 检查摄像头是否存在
+     */
+    function checkCamera(){
+    }
+    /**
+     * 检测浏览器是否兼容HTML5
+     */
+    function checkHtml5() {
+        return !!document.createElement("video").canPlayType;
+    }
+    /**
+     *  判断浏览器是否为IE或者其他浏览器
+     */
+    function doVerificationBrowser(){
+        var userAgent = navigator.userAgent; //取得浏览器的userAgent字符串
+        //判断浏览是否为IE
+        if (!!window.ActiveXObject || "ActiveXObject" in window || userAgent.indexOf("trident")>-1) {
+            return true;
+        } else{
+            return false;
+        }
+    }
+    // 获取媒体方法（旧方法）
+    navigator.getMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMeddia || navigator.msGetUserMedia;
+
+    var canvas = $('canvas'),
+        context = canvas.getContext('2d'),
+        video = $('video'),
+        snap = $('#snap'),
+        close = $('#close'),
+        upload = $('#upload'),
+        uploaded = $('#uploaded'),
+        mediaStreamTrack;
+
+    // 获取媒体方法（新方法）
+    // 使用新方法打开摄像头
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true
+        }).then(function(stream) {
+            console.log(stream);
+
+            mediaStreamTrack = typeof stream.stop === 'function' ? stream : stream.getTracks()[1];
+
+            video.src = (window.URL || window.webkitURL).createObjectURL(stream);
+            video.play();
+        }).catch(function(err) {
+            console.log(err);
+        })
+    }
+    // 使用旧方法打开摄像头
+    else if (navigator.getMedia) {
+        navigator.getMedia({
+            video: true
+        }, function(stream) {
+            mediaStreamTrack = stream.getTracks()[0];
+
+            video.src = (window.URL || window.webkitURL).createObjectURL(stream);
+            video.play();
+        }, function(err) {
+            console.log(err);
+        });
+    }
+
+    // 截取图像
+    snap.addEventListener('click', function() {
+        context.drawImage(video, 0, 0, 200, 150);
+    }, false);
+
+    // 关闭摄像头
+    close.addEventListener('click', function() {
+        mediaStreamTrack && mediaStreamTrack.stop();
+    }, false);
+
+    // 上传截取的图像
+    upload.addEventListener('click', function() {
+        jQuery.post('/uploadSnap.php', {
+            snapData: canvas.toDataURL('image/png')
+        }).done(function(rs) {
+            rs = JSON.parse(rs);
+
+            console.log(rs);
+
+            uploaded.src = rs.path;
+        }).fail(function(err) {
+            console.log(err);
+        });
+    }, false);
+
+    </script>
+</html>

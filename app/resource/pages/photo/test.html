@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <script src="/lib/index.js"></script>
+  <script src="/lib/zepto.js"></script>
+
+</head>
+<body>
+    <div id="test"></div>
+    <button class="start" disabled>拍摄照片</button>
+
+    <script>
+        const fhrObject = new fhr.Fhr({
+            type: 'photo',
+            swfUrl: '/lib/video.swf',
+            content: document.getElementById('test'),
+            callback: function(str) {
+                if (!str) {
+                    $('.start').removeAttr('disabled');
+                }
+                console.log(str);
+            },
+        });
+
+        $('.start').click(function() {
+            fhrObject.take();
+
+            setTimeout(function() {
+                console.log(fhrObject.getResult());
+
+                alert('打开开发者选项,查看log');
+            }, 500);
+        });
+    </script>
+</body>
+</html>

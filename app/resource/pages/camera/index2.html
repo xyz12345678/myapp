@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+</head>
+<body>
+    <video src="" id="video"></video>
+    <canvas id="canvas1" height="120px" ></canvas><hr />
+    <input type="button" title="视频" value="视频" onclick="getVedio();" /><br />  
+</body>
+  <script>
+  var canvas1 = document.getElementById('canvas1');  
+        var context1 = canvas1.getContext('2d'); 
+    var promisifiedOldGUM = function(constraints){
+      var getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia);
+      if(!getUserMedia){
+        return Promise.reject(new Error('getUserMedia is not work'))
+      }
+      return new Promise(function(resolve,reject){
+        getUserMedia.call(navigator,constraints,resolve,reject);
+      })
+    }
+
+    if(navigator.mediaDevices.getUserMedia === undefined){
+      navigator.mediaDevices.getUserMedia = promisifiedOldGUM;
+    }
+
+    var constraints = {audio:true,video:{width:1280,height:720}};
+
+    navigator.mediaDevices.getUserMedia(constraints)
+    .then(function(stream){
+      var video = document.querySelector('video');
+     video.src = window.URL && window.URL.createObjectURL(stream) || stream;  
+      video.onloadedmetadata = function(e){
+        video.play();
+      };
+    })
+    .catch(function(err){
+      console.log(err.name+":"+err.message);
+    })
+    function drawVideoAtCanvas(video,context) {  
+            window.setInterval(function () {  
+                context.drawImage(video, 0, 0,90,120);  
+            }, 60);  
+        }  
+  
+    function getVedio() {  
+            drawVideoAtCanvas(video, context1);  
+    }  
+  </script>
+</html>

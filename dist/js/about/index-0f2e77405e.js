@@ -1,1 +1,3 @@
-var aaa="hhhh";console.log(aaa);
+var aaa = "hhhh";
+
+console.log(aaa);
